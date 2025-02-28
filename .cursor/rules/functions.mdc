@@ -1,0 +1,7 @@
+---
+description: Este archivo es util para cuando tengas que generar docstrings en funciones
+globs: **/*.py
+alwaysApply: false
+---
+- Haz la documentación en inglés
+- Para cada función genera docstrings
