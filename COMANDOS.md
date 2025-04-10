@@ -39,15 +39,15 @@ uv pip install fastapi
 uv pip install -e .
 ```
 
-## Ejecución del proyecto
+## ⚠️ EJECUCION DEL PROYECTO ⚠️
 
 ### Iniciar la API (método recomendado)
 
 Para iniciar la API de forma sencilla, usa el archivo batch:
 
-```
-./start-api.bat
-```
+```Comando cmd```
+start-api.bat
+`````````````````
 
 Este archivo batch:
 1. Activa el entorno virtual automáticamente
@@ -65,6 +65,58 @@ python main.py
 # O con uvicorn directamente:
 .venv\Scripts\uvicorn main:app --reload
 ```
+
+## Peticiones a la API
+
+### En CMD con curl (Windows)
+Si prefieres usar curl genuino, puedes descargarlo desde https://curl.se/windows/ o usar:
+
+```cmd
+# Petición GET a la ruta principal
+curl -s http://localhost:8000/
+
+# Obtener lista de items
+curl -s http://localhost:8000/items
+
+# Obtener un item específico por ID
+curl -s http://localhost:8000/items/1
+
+# Crear un nuevo item (POST)
+curl -s -X POST -H "Content-Type: application/json" -d "{\"nombre\":\"Nuevo Item\",\"precio\":29.99,\"disponible\":true}" http://localhost:8000/items
+
+# Actualizar un item (PUT)
+curl -s -X PUT -H "Content-Type: application/json" -d "{\"nombre\":\"Item Actualizado\",\"precio\":39.99,\"disponible\":true}" http://localhost:8000/items/1
+
+# Eliminar un item (DELETE)
+curl -s -X DELETE http://localhost:8000/items/1
+```
+
+### En Linux/Mac con curl
+```bash
+# Petición GET a la ruta principal
+curl -s http://localhost:8000/
+
+# Obtener lista de items
+curl -s http://localhost:8000/items
+
+# Obtener un item específico por ID
+curl -s http://localhost:8000/items/1
+
+# Crear un nuevo item (POST)
+curl -s -X POST -H "Content-Type: application/json" -d '{"nombre":"Nuevo Item","precio":29.99,"disponible":true}' http://localhost:8000/items
+
+# Actualizar un item (PUT)
+curl -s -X PUT -H "Content-Type: application/json" -d '{"nombre":"Item Actualizado","precio":39.99,"disponible":true}' http://localhost:8000/items/1
+
+# Eliminar un item (DELETE)
+curl -s -X DELETE http://localhost:8000/items/1
+```
+
+### Usando un navegador
+Para rutas GET simples, puedes usar directamente un navegador:
+- Ruta principal: http://localhost:8000/
+- Documentación Swagger: http://localhost:8000/docs (recomendado para probar la API)
+- Lista de items: http://localhost:8000/items
 
 ## Desarrollo
 
