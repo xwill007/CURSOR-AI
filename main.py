@@ -1,17 +1,19 @@
-from fastapi import FastAPI, HTTPException, status, Depends, Query, Body, Path
+from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from settings import settings
-from schemas import Plato
-from typing import List, Dict, Optional, Annotated
+from pydantic import BaseModel
+from typing import List, Optional
+import uvicorn
 
-# Create the FastAPI application
+from settings import settings
+
+# Inicializar la aplicación FastAPI
 app = FastAPI(
     title=settings.APP_NAME,
     description=settings.APP_DESCRIPTION,
-    version=settings.APP_VERSION
+    version=settings.APP_VERSION,
 )
 
-# CORS configuration
+# Configurar CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -20,202 +22,124 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Simulated database for dishes
-platos_db: Dict[int, Plato] = {
-    1: Plato(id=1, name="Paella", precio=15.50),
-    2: Plato(id=2, name="Tortilla Española", precio=8.75),
-    3: Plato(id=3, name="Gazpacho", precio=6.25),
-}
+# Modelo de datos
+class Item(BaseModel):
+    id: Optional[int] = None
+    nombre: str
+    precio: float
+    disponible: bool = True
 
-# Example routes
+# Almacenamiento de datos en memoria
+items_db = {}
+contador_id = 1
+
+# Rutas API
 @app.get("/")
-async def root():
+async def raiz():
     """
-    Root endpoint that returns a welcome message.
+    Endpoint principal que retorna un mensaje de bienvenida.
     
     Returns:
-        dict: A welcome message
+        dict: Mensaje de bienvenida
     """
-    return {"message": "Welcome to my FastAPI API!"}
+    return {"mensaje": "Bienvenido a mi API con FastAPI"}
 
-@app.get("/health")
-async def health_check():
+@app.get("/items", response_model=List[Item])
+async def obtener_items():
     """
-    Health check endpoint to verify the API is running.
+    Obtiene todos los items.
     
     Returns:
-        dict: Status information
+        List[Item]: Lista de todos los items
     """
-    return {"status": "ok"}
+    return list(items_db.values())
 
-# Example route for items
-@app.get("/items/")
-async def read_items():
+@app.post("/items", response_model=Item, status_code=status.HTTP_201_CREATED)
+async def crear_item(item: Item):
     """
-    Get a list of example items.
-    
-    Returns:
-        dict: A dictionary of example items
-    """
-    fake_items_db = {"item1": {"name": "Foo"}, "item2": {"name": "Bar"}}
-    return fake_items_db
-
-@app.get("/items/{item_id}")
-async def read_item(item_id: str):
-    """
-    Get a specific item by ID.
+    Crea un nuevo item.
     
     Args:
-        item_id (str): The ID of the item to retrieve
+        item: Datos del item a crear
         
     Returns:
-        dict: The item data
+        Item: Item creado con su ID asignado
+    """
+    global contador_id
+    nuevo_item = item.model_copy(update={"id": contador_id})
+    items_db[contador_id] = nuevo_item
+    contador_id += 1
+    return nuevo_item
+
+@app.get("/items/{item_id}", response_model=Item)
+async def obtener_item(item_id: int):
+    """
+    Obtiene un item específico por su ID.
+    
+    Args:
+        item_id: ID del item a obtener
+        
+    Returns:
+        Item: Item encontrado
         
     Raises:
-        HTTPException: If the item is not found
+        HTTPException: Si el item no existe
     """
-    fake_items_db = {"item1": {"name": "Foo"}, "item2": {"name": "Bar"}}
-    if item_id not in fake_items_db:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return fake_items_db[item_id]
-
-# CRUD for the Plato model
-
-# Create - Create a new dish
-@app.post("/platos/", response_model=Plato, status_code=status.HTTP_201_CREATED)
-async def create_plato(plato: Annotated[Plato, Body(description="Data for the new dish")]):
-    """
-    Creates a new dish in the database.
-    
-    - **id**: Unique identifier for the dish
-    - **name**: Name of the dish
-    - **precio**: Price of the dish
-    """
-    if plato.id in platos_db:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"A dish with ID {plato.id} already exists"
-        )
-    platos_db[plato.id] = plato
-    return plato
-
-# Read - Get all dishes with pagination
-@app.get("/platos/", response_model=List[Plato])
-async def read_platos(
-    skip: Annotated[int, Query(description="Number of records to skip", ge=0)] = 0,
-    limit: Annotated[int, Query(description="Maximum number of records to return", ge=1, le=100)] = 10
-):
-    """
-    Gets a list of dishes with pagination.
-    
-    - **skip**: Number of records to skip (for pagination)
-    - **limit**: Maximum number of records to return
-    """
-    return list(platos_db.values())[skip:skip + limit]
-
-# Read - Get a specific dish by ID
-@app.get("/platos/{plato_id}", response_model=Plato)
-async def read_plato(
-    plato_id: Annotated[int, Path(description="ID of the dish to retrieve", ge=1)]
-):
-    """
-    Gets a specific dish by its ID.
-    
-    - **plato_id**: ID of the dish to retrieve
-    """
-    if plato_id not in platos_db:
+    if item_id not in items_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No dish found with ID {plato_id}"
+            detail="Item no encontrado"
         )
-    return platos_db[plato_id]
+    return items_db[item_id]
 
-# Update - Update an existing dish
-@app.put("/platos/{plato_id}", response_model=Plato)
-async def update_plato(
-    plato_id: Annotated[int, Path(description="ID of the dish to update", ge=1)],
-    plato: Annotated[Plato, Body(description="Updated dish data")]
-):
+@app.put("/items/{item_id}", response_model=Item)
+async def actualizar_item(item_id: int, item: Item):
     """
-    Updates an existing dish.
+    Actualiza un item existente.
     
-    - **plato_id**: ID of the dish to update
-    - **plato**: Updated dish data
+    Args:
+        item_id: ID del item a actualizar
+        item: Nuevos datos del item
+        
+    Returns:
+        Item: Item actualizado
+        
+    Raises:
+        HTTPException: Si el item no existe
     """
-    if plato_id not in platos_db:
+    if item_id not in items_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No dish found with ID {plato_id}"
+            detail="Item no encontrado"
         )
     
-    # Ensure the ID in the path matches the ID in the body
-    if plato_id != plato.id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"The ID in the URL ({plato_id}) does not match the ID in the request body ({plato.id})"
-        )
-    
-    platos_db[plato_id] = plato
-    return plato
+    items_db[item_id] = item.model_copy(update={"id": item_id})
+    return items_db[item_id]
 
-# Update - Partially update a dish (PATCH)
-@app.patch("/platos/{plato_id}", response_model=Plato)
-async def patch_plato(
-    plato_id: Annotated[int, Path(description="ID of the dish to partially update", ge=1)],
-    name: Annotated[Optional[str], Body(description="New dish name")] = None,
-    precio: Annotated[Optional[float], Body(description="New dish price")] = None
-):
+@app.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def eliminar_item(item_id: int):
     """
-    Partially updates an existing dish.
+    Elimina un item.
     
-    - **plato_id**: ID of the dish to partially update
-    - **name**: New dish name (optional)
-    - **precio**: New dish price (optional)
+    Args:
+        item_id: ID del item a eliminar
+        
+    Raises:
+        HTTPException: Si el item no existe
     """
-    if plato_id not in platos_db:
+    if item_id not in items_db:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No dish found with ID {plato_id}"
+            detail="Item no encontrado"
         )
     
-    plato_actual = platos_db[plato_id]
-    plato_data = plato_actual.model_dump()
-    
-    # Update only the provided fields
-    if name is not None:
-        plato_data["name"] = name
-    if precio is not None:
-        plato_data["precio"] = precio
-    
-    plato_actualizado = Plato(**plato_data)
-    platos_db[plato_id] = plato_actualizado
-    return plato_actualizado
+    del items_db[item_id]
 
-# Delete - Delete a dish
-@app.delete("/platos/{plato_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_plato(
-    plato_id: Annotated[int, Path(description="ID of the dish to delete", ge=1)]
-):
-    """
-    Deletes a dish from the database.
-    
-    - **plato_id**: ID of the dish to delete
-    """
-    if plato_id not in platos_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No dish found with ID {plato_id}"
-        )
-    
-    del platos_db[plato_id]
-    return None
-
-# Run the application if called directly
+# Punto de entrada para ejecutar la aplicación
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(
         "main:app", 
         host=settings.HOST, 
         port=settings.PORT, 
         reload=settings.RELOAD
-    )
+    ) 

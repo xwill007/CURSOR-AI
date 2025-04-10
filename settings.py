@@ -3,32 +3,24 @@ from typing import List
 
 class Settings(BaseSettings):
     """
-    Application settings configuration class.
-    
-    This class manages all configuration parameters for the application,
-    including app metadata, server settings, and CORS configuration.
+    Configuración de la aplicación
     """
-    # Application configuration
-    APP_NAME: str = "Mi API con FastAPI"
-    APP_DESCRIPTION: str = "Una API de ejemplo creada con FastAPI"
+    # Configuración general
+    APP_NAME: str = "FastAPI Simple"
+    APP_DESCRIPTION: str = "Una API simple construida con FastAPI"
     APP_VERSION: str = "0.1.0"
     
-    # Server configuration
+    # Configuración del servidor
     HOST: str = "0.0.0.0"
-    PORT: int = 8888
+    PORT: int = 8000
     RELOAD: bool = True
     
-    # CORS configuration
+    # CORS
     CORS_ORIGINS: List[str] = ["*"]
     
     class Config:
-        """
-        Configuration for the Settings class.
-        
-        Specifies environment file location and case sensitivity settings.
-        """
         env_file = ".env"
         case_sensitive = True
 
-# Create a configuration instance
+# Instancia de configuración para usar en la aplicación
 settings = Settings()

@@ -3,43 +3,40 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "fastapi-project"
+name = "fastapi-app"
 version = "0.1.0"
-description = "Una API simple creada con FastAPI"
+description = "Una API simple construida con FastAPI"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
 authors = [
-    {name = "Tu Nombre", email = "tu.email@ejemplo.com"},
+    {name = "Usuario", email = "usuario@example.com"},
 ]
 dependencies = [
-    "fastapi>=0.100.0",
-    "uvicorn[standard]>=0.22.0",
-    "pydantic-settings>=2.0.0",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "pydantic>=2.4.2",
+    "pydantic-settings>=2.0.3",
+    "python-dotenv>=1.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "black>=23.0.0",
+    "pytest>=7.4.2",
+    "black>=23.9.1",
     "isort>=5.12.0",
-    "mypy>=1.0.0",
+    "mypy>=1.5.1",
 ]
 
 [tool.black]
 line-length = 88
-target-version = ["py38"]
 
 [tool.isort]
 profile = "black"
 line_length = 88
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
-disallow_incomplete_defs = true
-
-[tool.pytest]
-testpaths = ["tests"] 
+disallow_incomplete_defs = true 
