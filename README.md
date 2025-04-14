@@ -1,5 +1,9 @@
 # API FastAPI
 
+```Comando cmd```
+start-api.bat
+`````````````````
+
 Una API simple construida con FastAPI.
 
 ## Requisitos
