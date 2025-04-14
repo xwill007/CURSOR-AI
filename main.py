@@ -1,145 +1,71 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional
-import uvicorn
+from dotenv import load_dotenv
+import lyricsgenius
+import os
+from googletrans import Translator
 
-from settings import settings
+# Cargar variables de entorno
+load_dotenv()
 
-# Inicializar la aplicación FastAPI
+# Inicializar FastAPI
 app = FastAPI(
-    title=settings.APP_NAME,
-    description=settings.APP_DESCRIPTION,
-    version=settings.APP_VERSION,
+    title="API de Traducción de Letras",
+    description="API para obtener y traducir letras de canciones usando Genius y Google Translate",
+    version="1.0.0"
 )
 
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Modelo de datos
-class Item(BaseModel):
-    id: Optional[int] = None
-    nombre: str
-    precio: float
-    disponible: bool = True
+# Inicializar Genius API
+genius = lyricsgenius.Genius(os.getenv("GENIUS_API_KEY"))
+translator = Translator()
 
-# Almacenamiento de datos en memoria
-items_db = {}
-contador_id = 1
+class SongRequest(BaseModel):
+    artist: str
+    title: str
+    target_lang: str = "es"  # Idioma destino por defecto: español
 
-# Rutas API
 @app.get("/")
-async def raiz():
-    """
-    Endpoint principal que retorna un mensaje de bienvenida.
-    
-    Returns:
-        dict: Mensaje de bienvenida
-    """
-    return {"mensaje": "Bienvenido a mi API con FastAPI"}
+async def read_root():
+    return {"message": "¡Bienvenido a la API de Traducción de Letras!"}
 
-@app.get("/items", response_model=List[Item])
-async def obtener_items():
-    """
-    Obtiene todos los items.
-    
-    Returns:
-        List[Item]: Lista de todos los items
-    """
-    return list(items_db.values())
-
-@app.post("/items", response_model=Item, status_code=status.HTTP_201_CREATED)
-async def crear_item(item: Item):
-    """
-    Crea un nuevo item.
-    
-    Args:
-        item: Datos del item a crear
+@app.post("/translate-lyrics")
+async def translate_lyrics(song_request: SongRequest):
+    try:
+        # Buscar la canción
+        song = genius.search_song(song_request.title, song_request.artist)
+        if not song:
+            raise HTTPException(status_code=404, detail="Canción no encontrada")
         
-    Returns:
-        Item: Item creado con su ID asignado
-    """
-    global contador_id
-    nuevo_item = item.model_copy(update={"id": contador_id})
-    items_db[contador_id] = nuevo_item
-    contador_id += 1
-    return nuevo_item
-
-@app.get("/items/{item_id}", response_model=Item)
-async def obtener_item(item_id: int):
-    """
-    Obtiene un item específico por su ID.
-    
-    Args:
-        item_id: ID del item a obtener
-        
-    Returns:
-        Item: Item encontrado
-        
-    Raises:
-        HTTPException: Si el item no existe
-    """
-    if item_id not in items_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Item no encontrado"
+        # Traducir letras
+        translated_lyrics = translator.translate(
+            song.lyrics,
+            dest=song_request.target_lang
         )
-    return items_db[item_id]
-
-@app.put("/items/{item_id}", response_model=Item)
-async def actualizar_item(item_id: int, item: Item):
-    """
-    Actualiza un item existente.
+        
+        return {
+            "original_lyrics": song.lyrics,
+            "translated_lyrics": translated_lyrics.text,
+            "song_title": song.title,
+            "artist": song.artist,
+            "target_language": song_request.target_lang
+        }
     
-    Args:
-        item_id: ID del item a actualizar
-        item: Nuevos datos del item
-        
-    Returns:
-        Item: Item actualizado
-        
-    Raises:
-        HTTPException: Si el item no existe
-    """
-    if item_id not in items_db:
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Item no encontrado"
+            status_code=500,
+            detail=f"Error al procesar la solicitud: {str(e)}"
         )
-    
-    items_db[item_id] = item.model_copy(update={"id": item_id})
-    return items_db[item_id]
 
-@app.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def eliminar_item(item_id: int):
-    """
-    Elimina un item.
-    
-    Args:
-        item_id: ID del item a eliminar
-        
-    Raises:
-        HTTPException: Si el item no existe
-    """
-    if item_id not in items_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Item no encontrado"
-        )
-    
-    del items_db[item_id]
-
-# Punto de entrada para ejecutar la aplicación
 if __name__ == "__main__":
-    uvicorn.run(
-        "main:app", 
-        host=settings.HOST, 
-        port=settings.PORT, 
-        reload=settings.RELOAD
-    ) 
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True) 

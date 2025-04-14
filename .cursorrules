@@ -1,63 +1,232 @@
+You are an expert in Python, FastAPI, and scalable API development.
 
-  You are an expert in Python, FastAPI, and scalable API development.
+Key Principles
+- Write concise, technical responses with accurate Python examples.
+- Use functional, declarative programming; avoid classes where possible.
+- Prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., is_active, has_permission).
+- Use lowercase with underscores for directories and files (e.g., routers/user_routes.py).
+- Favor named exports for routes and utility functions.
+- Use the Receive an Object, Return an Object (RORO) pattern.
+
+Python/FastAPI
+- Use def for pure functions and async def for asynchronous operations.
+- Use type hints for all function signatures. Prefer Pydantic models over raw dictionaries for input validation.
+- File structure: exported router, sub-routes, utilities, static content, types (models, schemas).
+- Avoid unnecessary curly braces in conditional statements.
+- For single-line statements in conditionals, omit curly braces.
+- Use concise, one-line syntax for simple conditional statements (e.g., if condition: do_something()).
+
+Error Handling and Validation
+- Prioritize error handling and edge cases:
+  - Handle errors and edge cases at the beginning of functions.
+  - Use early returns for error conditions to avoid deeply nested if statements.
+  - Place the happy path last in the function for improved readability.
+  - Avoid unnecessary else statements; use the if-return pattern instead.
+  - Use guard clauses to handle preconditions and invalid states early.
+  - Implement proper error logging and user-friendly error messages.
+  - Use custom error types or error factories for consistent error handling.
+
+Dependencies
+- FastAPI
+- Pydantic v2
+- Async database libraries like asyncpg or aiomysql
+- SQLAlchemy 2.0 (if using ORM features)
+
+FastAPI-Specific Guidelines
+- Use functional components (plain functions) and Pydantic models for input validation and response schemas.
+- Use declarative route definitions with clear return type annotations.
+- Use def for synchronous operations and async def for asynchronous ones.
+- Minimize @app.on_event("startup") and @app.on_event("shutdown"); prefer lifespan context managers for managing startup and shutdown events.
+- Use middleware for logging, error monitoring, and performance optimization.
+- Optimize for performance using async functions for I/O-bound tasks, caching strategies, and lazy loading.
+- Use HTTPException for expected errors and model them as specific HTTP responses.
+- Use middleware for handling unexpected errors, logging, and error monitoring.
+- Use Pydantic's BaseModel for consistent input/output validation and response schemas.
+
+Performance Optimization
+- Minimize blocking I/O operations; use asynchronous operations for all database calls and external API requests.
+- Implement caching for static and frequently accessed data using tools like Redis or in-memory stores.
+- Optimize data serialization and deserialization with Pydantic.
+- Use lazy loading techniques for large datasets and substantial API responses.
+
+Key Conventions
+1. Rely on FastAPI's dependency injection system for managing state and shared resources.
+2. Prioritize API performance metrics (response time, latency, throughput).
+3. Limit blocking operations in routes:
+  - Favor asynchronous and non-blocking flows.
+  - Use dedicated async functions for database and external API operations.
+  - Structure routes and dependencies clearly to optimize readability and maintainability.
+
+Refer to FastAPI documentation for Data Models, Path Operations, and Middleware for best practices.
+
+architecture: |
+  El proyecto sigue los principios SOLID y una arquitectura modular:
   
-  Key Principles
-  - Write concise, technical responses with accurate Python examples.
-  - Use functional, declarative programming; avoid classes where possible.
-  - Prefer iteration and modularization over code duplication.
-  - Use descriptive variable names with auxiliary verbs (e.g., is_active, has_permission).
-  - Use lowercase with underscores for directories and files (e.g., routers/user_routes.py).
-  - Favor named exports for routes and utility functions.
-  - Use the Receive an Object, Return an Object (RORO) pattern.
+  1. Single Responsibility Principle (SRP):
+     - Cada módulo es autocontenido y tiene una única responsabilidad
+     - Los servicios están separados por dominio de negocio
+     - Las utilidades están en módulos independientes
   
-  Python/FastAPI
-  - Use def for pure functions and async def for asynchronous operations.
-  - Use type hints for all function signatures. Prefer Pydantic models over raw dictionaries for input validation.
-  - File structure: exported router, sub-routes, utilities, static content, types (models, schemas).
-  - Avoid unnecessary curly braces in conditional statements.
-  - For single-line statements in conditionals, omit curly braces.
-  - Use concise, one-line syntax for simple conditional statements (e.g., if condition: do_something()).
+  2. Open/Closed Principle (OCP):
+     - Las interfaces base están en /core/interfaces
+     - Las implementaciones están en /modules/{feature}/infrastructure
+     - Usar herencia y composición para extender funcionalidad
   
-  Error Handling and Validation
-  - Prioritize error handling and edge cases:
-    - Handle errors and edge cases at the beginning of functions.
-    - Use early returns for error conditions to avoid deeply nested if statements.
-    - Place the happy path last in the function for improved readability.
-    - Avoid unnecessary else statements; use the if-return pattern instead.
-    - Use guard clauses to handle preconditions and invalid states early.
-    - Implement proper error logging and user-friendly error messages.
-    - Use custom error types or error factories for consistent error handling.
+  3. Liskov Substitution Principle (LSP):
+     - Las interfaces definen contratos claros
+     - Las implementaciones deben ser intercambiables
+     - Usar type hints y Pydantic para validación
   
-  Dependencies
-  - FastAPI
-  - Pydantic v2
-  - Async database libraries like asyncpg or aiomysql
-  - SQLAlchemy 2.0 (if using ORM features)
+  4. Interface Segregation Principle (ISP):
+     - Interfaces pequeñas y específicas por módulo
+     - Separar interfaces por dominio
+     - Evitar interfaces monolíticas
   
-  FastAPI-Specific Guidelines
-  - Use functional components (plain functions) and Pydantic models for input validation and response schemas.
-  - Use declarative route definitions with clear return type annotations.
-  - Use def for synchronous operations and async def for asynchronous ones.
-  - Minimize @app.on_event("startup") and @app.on_event("shutdown"); prefer lifespan context managers for managing startup and shutdown events.
-  - Use middleware for logging, error monitoring, and performance optimization.
-  - Optimize for performance using async functions for I/O-bound tasks, caching strategies, and lazy loading.
-  - Use HTTPException for expected errors and model them as specific HTTP responses.
-  - Use middleware for handling unexpected errors, logging, and error monitoring.
-  - Use Pydantic's BaseModel for consistent input/output validation and response schemas.
-  
-  Performance Optimization
-  - Minimize blocking I/O operations; use asynchronous operations for all database calls and external API requests.
-  - Implement caching for static and frequently accessed data using tools like Redis or in-memory stores.
-  - Optimize data serialization and deserialization with Pydantic.
-  - Use lazy loading techniques for large datasets and substantial API responses.
-  
-  Key Conventions
-  1. Rely on FastAPI’s dependency injection system for managing state and shared resources.
-  2. Prioritize API performance metrics (response time, latency, throughput).
-  3. Limit blocking operations in routes:
-     - Favor asynchronous and non-blocking flows.
-     - Use dedicated async functions for database and external API operations.
-     - Structure routes and dependencies clearly to optimize readability and maintainability.
-  
-  Refer to FastAPI documentation for Data Models, Path Operations, and Middleware for best practices.
+  5. Dependency Inversion Principle (DIP):
+     - Usar inyección de dependencias
+     - Depender de abstracciones, no implementaciones
+     - Usar FastAPI Depends para inyección
+
+  Estructura Modular del Proyecto:
+  ```
+  src/
+  ├── core/                           # Núcleo compartido entre módulos
+  │   ├── interfaces/                 # Interfaces base
+  │   │   ├── repository.py
+  │   │   └── service.py
+  │   ├── exceptions/                 # Excepciones base
+  │   │   ├── base.py
+  │   │   └── http.py
+  │   ├── config/                     # Configuración global
+  │   │   ├── settings.py
+  │   │   └── environment.py
+  │   └── utils/                      # Utilidades compartidas
+  │       ├── logging.py
+  │       └── validators.py
+  │
+  ├── modules/                        # Módulos de funcionalidad
+  │   ├── lyrics/                     # Módulo de letras de canciones
+  │   │   ├── __init__.py            # Exporta la funcionalidad pública
+  │   │   ├── api/                   # API del módulo
+  │   │   │   ├── routes.py
+  │   │   │   └── dependencies.py
+  │   │   ├── domain/                # Lógica de negocio
+  │   │   │   ├── models.py
+  │   │   │   └── schemas.py
+  │   │   ├── infrastructure/        # Implementaciones
+  │   │   │   ├── genius_service.py
+  │   │   │   └── repository.py
+  │   │   ├── interfaces/           # Interfaces específicas del módulo
+  │   │   │   └── service.py
+  │   │   └── services/            # Servicios del módulo
+  │   │       └── lyrics_service.py
+  │   │
+  │   ├── translation/              # Módulo de traducción
+  │   │   ├── __init__.py
+  │   │   ├── api/
+  │   │   │   ├── routes.py
+  │   │   │   └── dependencies.py
+  │   │   ├── domain/
+  │   │   │   ├── models.py
+  │   │   │   └── schemas.py
+  │   │   ├── infrastructure/
+  │   │   │   ├── google_translate.py
+  │   │   │   └── repository.py
+  │   │   ├── interfaces/
+  │   │   │   └── service.py
+  │   │   └── services/
+  │   │       └── translation_service.py
+  │   │
+  │   └── subtitles/               # Módulo de subtítulos
+  │       ├── __init__.py
+  │       ├── api/
+  │       │   ├── routes.py
+  │       │   └── dependencies.py
+  │       ├── domain/
+  │       │   ├── models.py
+  │       │   └── schemas.py
+  │       ├── infrastructure/
+  │       │   └── timing_service.py
+  │       └── services/
+  │           └── subtitle_service.py
+  │
+  ├── api/                         # API principal
+  │   ├── v1/
+  │   │   ├── router.py           # Router principal que agrupa módulos
+  │   │   └── dependencies.py
+  │   └── middleware/             # Middleware global
+  │       ├── error_handler.py
+  │       └── logging.py
+  │
+  └── main.py                     # Punto de entrada de la aplicación
+
+  Estructura de un Módulo Reutilizable:
+  ```
+  module_name/
+  ├── __init__.py                # Exporta la API pública del módulo
+  ├── api/                       # API del módulo
+  │   ├── routes.py             # Endpoints
+  │   └── dependencies.py       # Dependencias específicas
+  ├── domain/                    # Lógica de negocio
+  │   ├── models.py             # Modelos de dominio
+  │   └── schemas.py            # Esquemas de entrada/salida
+  ├── infrastructure/            # Implementaciones concretas
+  │   ├── services/             # Servicios externos
+  │   └── repository.py         # Acceso a datos
+  ├── interfaces/               # Contratos del módulo
+  │   └── service.py           # Interfaces de servicios
+  └── services/                # Implementación de servicios
+      └── module_service.py    # Lógica principal
+  ```
+
+  Guía de Módulos:
+  1. Cada módulo debe ser autocontenido
+  2. Usar __init__.py para exponer solo la API pública
+  3. Mantener dependencias mínimas entre módulos
+  4. Documentar la API pública del módulo
+  5. Incluir tests específicos del módulo
+  6. Proporcionar configuración por defecto
+  7. Usar inyección de dependencias para servicios externos
+
+  Para reutilizar un módulo:
+  1. Copiar la carpeta del módulo completo
+  2. Instalar dependencias específicas del módulo
+  3. Configurar variables de entorno necesarias
+  4. Importar y registrar las rutas del módulo
+  5. Inyectar implementaciones personalizadas si es necesario
+
+functions: |
+  Reglas para funciones:
+  1. Usar type hints en todos los parámetros y retornos
+  2. Documentar con docstrings siguiendo formato Google
+  3. Implementar manejo de errores con excepciones personalizadas
+  4. Seguir principio de responsabilidad única
+  5. Máximo 20 líneas por función
+  6. Nombres descriptivos usando verbos
+  7. Parámetros nombrados para mejor legibilidad
+
+dependencies: |
+  Gestión de dependencias:
+  1. Usar FastAPI Depends para inyección
+  2. Configurar servicios en contenedor de dependencias
+  3. Abstraer servicios externos tras interfaces
+  4. Usar patrón Repository para acceso a datos
+  5. Implementar patrón Unit of Work para transacciones
+
+error_handling: |
+  Manejo de errores:
+  1. Crear excepciones personalizadas por dominio
+  2. Usar middleware para captura global
+  3. Implementar logging estructurado
+  4. Retornar errores HTTP apropiados
+  5. Incluir mensajes de error descriptivos
+
+testing: |
+  Pruebas:
+  1. Usar pytest para pruebas unitarias
+  2. Implementar pruebas de integración
+  3. Usar fixtures para configuración
+  4. Mockear servicios externos
+  5. Mantener cobertura > 80%
   
